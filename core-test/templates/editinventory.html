@@ -1,0 +1,151 @@
+{% extends 'layout/base.html' %}
+{% block 'title' %} Change {{editinventory.name}} {% endblock %}
+{% block extrastyles %}
+<style>
+    .hidden {
+        display: none;
+      }
+
+</style>
+{% endblock %}
+
+
+{% block breadcrumbs %}
+  {{ block.super }}
+
+        <li class="breadcrumb-item"><a  class="text-white" href="{% url 'inventories' %}">Inventories  </a></li>
+        <li class="breadcrumb-item"><a  class="text-white">{{editinventory.department}}</a></li>
+{% endblock %}
+
+
+{% block 'content' %}
+
+
+<script>
+    var inventoryItems = [];
+
+    {% for item in editinventory.items.all %}
+        inventoryItems.push({{ item.id }});
+    {% endfor %}
+
+</script>
+
+
+    
+<!-- Add Item into inventory Modal -->
+<div class="modal fade " id="addItem" tabindex="-1" aria-labelledby="addItemLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="addItemLabel">Add Items</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+        
+            <!--- ADD  ITEM FORM -->
+            <form  method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p class="fs-5 mx-4">
+                        Select an item
+                    </p>
+                    <div class="form-group mb-5 d-flex flex-row">
+                        {{addform.item}}  <div><a href="{% url 'additem' %}" class="btn btn-outline-primary"><i class="fs-5 fa-solid fa-plus"></i></a></div>
+
+                    </div>
+                    <p class="fs-5 mx-4">
+                        Quantity
+                    </p>
+                    <div class="form-group mb-5 d-flex flex-row">
+                        {{addform.amount}}
+                    </div>
+                   
+                    {{ addform.inventory }} 
+                </div>
+                <div class="modal-footer">
+                    <div class="d-flex text-center">
+                        <button type="submit" class="btn btn-primary px-3" name="additems">
+                        <i class="fa-solid fa-check me-2"></i> Submit</button>
+                    </div>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+    <div class="container py-3 ">
+        <div class="row">          
+            <div class="col-xl-10 m-auto">
+                <div class="card">
+                    <div class="card-body p-4">
+                        <h2 class="my-3  pb-5">Change inventory {{editinventory.id}} - {{editinventory.department}} </h2>
+                        <hr>
+                        {% if error_message %}
+                        <p class="my-5 mx-3 text-danger">{{ error_message }}</p>
+                        {% endif %}
+    
+                        <!--- EDIT  Inventory FORM -->
+                        <form  method="post">
+                            {% csrf_token %}
+                                <p class="fs-5 mx-4">
+                                    Name 
+                                </p>
+                                <div class="form-group mb-5 d-flex flex-row">
+                                    {{editform.department}}
+                                </div>
+
+
+                                <a href="{% url 'deptitems' id=editinventory.id %}" class="mx-4 fs-3">SEE ITEMS<a>
+                                                        
+
+                                <div class="d-flex flex-row text-center m-auto py-5">
+                                    <button type="submit" class="btn btn-primary px-3 fs-3" name="editinventory">
+                                    <i class="fa-solid fa-check me-2"></i> Submit</button>
+                                </div>
+                        </form>
+
+                        <div class="d-flex flex-row-reverse pb-4 mx-4">
+                            <button type="button" class="btn btn-light fs-4 shadow-l" data-bs-toggle="modal" data-bs-target="#addItem">
+                                <i class="fa-solid fa-plus me-2"></i> <strong>Add new Item</strong>
+                            </button>
+                        </div> 
+                    </div>
+
+                    <a href="{% url 'inventories' %}" class="btn fs-7 mx-2 my-5">
+                        <i class="fa-solid fa-arrow-left me-2 fs-7"></i> Go back
+                    </a>
+                </div>
+                
+        </div>
+    </div>
+
+    </div>
+
+{% endblock %}
+
+
+
+
+{% block 'extrascripts' %}
+<script>
+    // Obtener los elementos HTML que necesitas
+    var itemSelect = document.getElementById('item');
+
+    // Filtrar los items que no están en el inventario
+    var filteredOptions = Array.from(itemSelect.options).filter(function(option) {
+        return !inventoryItems.includes(parseInt(option.value));
+    });
+
+    // Deshabilitar las opciones que ya están en el inventario
+    Array.from(itemSelect.options).forEach(function(option) {
+        if (inventoryItems.includes(parseInt(option.value))) {
+            option.disabled = true;
+        }
+    });
+
+    // Habilitar las opciones filtradas
+    filteredOptions.forEach(function(option) {
+        option.disabled = false;
+    });
+</script>
+{% endblock%}

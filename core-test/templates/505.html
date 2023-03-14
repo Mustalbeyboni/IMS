@@ -1,0 +1,20 @@
+{% extends 'layout/base.html' %}
+{% block 'title' %} Server Error {% endblock %}
+
+{% block 'body' %}
+
+<main>
+    <div class="container">
+
+      <section class="m-auto text-center col-lg-6 section error-404 min-vh-100 d-flex flex-column align-items-center justify-content-center">
+        <h1> Ups!!!</h1>
+        <h2> Server Error </h2>
+
+        <a class="btn" href="{% url 'index' %}">Go back</a>
+        
+      </section>
+
+    </div>
+</main>
+
+{% endblock %}

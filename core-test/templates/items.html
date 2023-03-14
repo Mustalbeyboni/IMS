@@ -1,0 +1,400 @@
+{% extends 'layout/base.html' %}
+{% block 'title' %} Items {% endblock %}
+
+{% block extrastyles %}
+<style>
+    .hidden {
+        display: none;
+      }
+
+</style>
+{% endblock %}
+
+{% block breadcrumbs %}
+  {{ block.super }}
+    {% if request.user.is_superuser %}
+        {% if 'id' in request.resolver_match.kwargs %}
+            <li class="breadcrumb-item"><a  class="text-white" href="{% url 'inventories' %}"> Inventories </a></li>
+            <li class="breadcrumb-item"><a  class="text-white"href="{% url 'deptitems' id=inventory.id %}">{{ inventory.department }} Inventory </a></li>
+        {% else %}
+            <li class="breadcrumb-item"><a  class="text-white" href="{% url 'items' %}">Items</a></li>
+        {% endif %}
+    {% else %}
+        <li class="breadcrumb-item"><a  class="text-white"href="{% url 'deptitems' id=inventory.id %}">{{ inventory.department }} Inventory </a></li>
+    {% endif %}
+   
+{% endblock %}
+
+{% block 'content' %}
+
+
+{% if 'id'  in request.resolver_match.kwargs %}
+
+<script>
+    var inventoryItems = [];
+
+    {% for item in items %}
+        inventoryItems.push({{ item.item.id }});
+    {% endfor %}
+
+</script>
+
+
+<!-- Add Item into inventory Modal -->
+<div class="modal fade " id="addItem" tabindex="-1" aria-labelledby="addItemLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="addItemLabel">Add Items</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+        
+            <!--- ADD  ITEM FORM -->
+            <form  method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p class="fs-5 mx-4">
+                        Select an item
+                    </p>
+                    
+                    <div class=" my-3 d-flex flex-row m-auto ">
+
+                        {% if request.user.is_superuser %}
+                        <div><a href="{% url 'additem' %}" class="btn btn-outline-primary"><i class="fs-5 fa-solid fa-plus"></i></a></div>
+                        {% endif %}
+
+                        {{addform.item}} # if we already have this item, we should just change it amount in edit item
+                    </div>
+
+
+                    <p class="fs-5 mx-4">
+                        Quantity
+                    </p>
+                    <div class="form-group mb-5 d-flex flex-row">
+                        {{addform.amount}} 
+                    </div>
+                   
+                    {{ addform.inventory }} 
+                </div>
+                <div class="modal-footer">
+                    <div class="d-flex text-center">
+                        <button type="submit" class="btn btn-primary px-3" name="additems">
+                        <i class="fa-solid fa-check me-2"></i> Submit</button>
+                    </div>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+<!-- END Add Item Modal -->
+{% else %}
+    <!-- Add Item Modal -->
+    <div class="modal fade " id="addItem" tabindex="-1" aria-labelledby="addItemLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="addItemLabel">Add a new Item</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+            
+                <!--- ADD  ITEM FORM -->
+                <form  method="post">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <div class="form-group mb-5 d-flex flex-row">
+                            {{addform.name}}
+                        </div>
+                        <div class="fs-5">
+                            Quantity 
+                        </div>
+                        <div class="form-group mb-5 d-flex flex-row">
+                            {{addform.total}}
+                        </div>
+                        <div class="fs-5">
+                            Category 
+                        </div>
+                        <div class=" my-3 d-flex flex-row m-auto">
+                            <div class="col-11">   {{addform.category}}                             </div>
+                            <div><a href="{% url 'addnewcategory' %}" class="btn btn-outline-primary"><i class="fs-5 fa-solid fa-plus"></i></a></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <div class="d-flex text-center">
+                            <button type="submit" class="btn btn-primary px-3" name="additem">
+                            <i class="fa-solid fa-check me-2"></i> Submit</button>
+                        </div>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+    <!-- END Add Item Modal -->
+    {% endif %}
+
+
+    <div class="container">
+        
+
+
+    <!-- DELETE ITEM ALERT -->
+    <div class="my-2">
+        {% if 'deleted' in request.GET %}
+        <div class="alert alert-danger alert-dismissible fade show mx-5" role="alert">
+            <i class="fa-regular fa-circle-xmark me-2"></i> Item deleted!
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if error_message %}
+    <div class="my-2">
+        <div class="alert alert-danger alert-dismissible fade show mx-5" role="alert">
+
+            <p class=" text-danger">{{ error_message }} </p>
+            
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+
+        </div>
+    </div>
+    {% endif %}
+
+<!-- ADD ITEM ALERT -->
+    <div class="my-2">
+        {% if 'added' in request.GET %}
+        <div class="alert alert-success alert-dismissible fade show mx-5" role="alert">
+            ☑ Item added successfully!
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endif %}
+    </div>
+ <!-- EDITED ITEM ALERT -->
+ <div class="my-2">
+    {% if 'changed' in request.GET %}
+    <div class="alert alert-info alert-dismissible fade show mx-5" role="alert">
+        ☑ Item changed successfully!
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+</div>
+
+
+
+
+        {% if items %}
+
+            {% if 'id' in request.resolver_match.kwargs %}
+                <div class="d-flex flex-row-reverse">  
+                    
+                    <a class="btn btn-primary mb-3 mx-4 fs-5 shadow-lg" href="{% url 'export_dpt_pdf' id=inventory.id %}?q={{ request.GET.q }}">
+                        {% if request.GET.q %}
+                            Export search results as PDF
+                        {% else %}
+                            Export PDF Report
+                        {% endif %}
+                    </a>
+
+                    <h4 class="mx-4">TOTAL : {{total_items_count}} {% if total_items_count == 1 %}item {% else %}items {% endif %}</h4>
+
+                </div>
+                <h1 class="my-4 text-center">{{ inventory.department }} Inventory</h1>
+            {% else %}
+                <div class="d-flex flex-row-reverse">  
+                    <a class="btn btn-primary mb-3 mx-4 fs-5 shadow-lg" href="{% url 'export_pdf' %}?q={{ request.GET.q }}">
+                    {% if request.GET.q %}
+                        Export search results as PDF
+                    {% else %}
+                        Export PDF
+                    {% endif %}
+                    </a>
+                    <h4 class="mx-4">TOTAL : {{total_items_count}} {% if total_items_count == 1 %}item {% else %}items {% endif %}</h4>
+
+                </div>
+                <h1 class="mb-5 mt-4 text-center">ITEMS</h1>
+
+            {% endif %}
+
+    
+
+            <div class="py-1 mb-4 mx-5">
+                <form class="d-flex flex-row" action="{% if 'id' in request.resolver_match.kwargs %}
+                    {% url 'deptitems' id=inventory.id %}{% else %}{% url 'items' %}{% endif %}" method="GET">
+                    <input class="form-control shadow" type="text" name="q" placeholder="Search items or categories...">
+                    <button class="btn btn-dark shadow" type="submit">Search</button>
+                </form>
+            </div>
+            
+            <div class="d-flex flex-row-reverse pb-4 mx-4">
+                <button type="button" class="btn btn-light fs-4 shadow-l" data-bs-toggle="modal" data-bs-target="#addItem">
+                    <i class="fa-solid fa-plus me-2"></i> <strong>Add new Item</strong>
+                </button>
+            </div> 
+
+
+            <!-- TABLE ALL itemS -->
+            <div class="py-3 px-3 my-4 text-center">
+                <table class="table table-responsive align-middle table-bordered table-hover rounded-lg bg-white shadow-lg py-5">
+                    <thead >
+                    <tr >
+                        <th scope="col" class=" py-4">NAME</th>
+                        <th scope="col"  class="py-4"> {% if 'id'  in request.resolver_match.kwargs %}
+                            DATE ADDED {% else %}DATE CREATED{% endif %}</th>
+                        <th scope="col" class=" py-4">DATE UPDATED</th>
+                        {% if 'id'  in request.resolver_match.kwargs %}
+                        <th scope="col" class=" py-4">QUANTITY</th>
+                        {% else %}
+                        <th scope="col" class=" py-4">PRESENT IN</th>
+                        <th scope="col" class=" py-4">TOTAL</th>
+                        <th scope="col" class=" py-4">AVAILABLE</th>
+
+                        {% endif %}
+                        <th scope="col" class=" py-4">CATEGORY</th>
+
+                        <th class="text-center py-4"> </th>
+                    </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for item in items %}
+                            <tr>
+                                <td>
+                                    {% if 'id'  in request.resolver_match.kwargs %}
+                                    <a href="{% url 'edititeminventory' id=item.id %}">{{item.item.name}}</a></td>
+                                    {% else %}
+                                    <a href="{% url 'edititem' id=item.id %}">{{item.name}}</a></td>
+                                    {% endif %}
+                                {% if 'id'  in request.resolver_match.kwargs %}
+                                    <td>{{item.created_at|date:"d/m/Y"}}</td>
+                                    <td>{{item.updated_at|date:"d/m/Y"}}</td>
+                                {% else %}
+                                    <td>{{item.created_at|date:"d/m/Y"}}</td>
+                                    <td>{{item.updated_at|date:"d/m/Y"}}</td>
+                                {% endif %}
+                                
+                                
+                                {% if 'id'  in request.resolver_match.kwargs %}
+                                <td>{{item.amount}}</td>
+
+                                {% else %}
+                                    <td>
+                                    {% if item.inventories.all %}
+
+                                        {% if item.inventories.all.count > 1 %}
+                                            {% for inventory in item.inventories.all.distinct %}
+                                                <a href="{% url 'deptitems' id=inventory.id %}">{{inventory}} </a>
+                                                {% if not forloop.last %}/ {% endif %}
+                                            {% endfor %}
+                                        {% else %}
+                                            <a href="{% url 'deptitems' id=item.inventories.all.first.id %}">{{item.inventories.all.first}}</a>
+                                        {% endif %}
+                                    {% else %}
+                                        None
+                                    {% endif %}
+                                    </td>                                  
+                                    <td>{{item.total}}</td>
+                                    <td>{{item.available}}</td>
+                                {% endif %}
+
+                                {% if 'id'  in request.resolver_match.kwargs %}
+
+                                    {% if item.item.category %}
+                                        <td><a href="{% url 'editcategory' id=item.item.category.id %}">{{item.item.category}}</a></td>
+                                    {% else %}
+                                        <td>None</td>
+                                    {% endif %}
+                                {% else %}
+                                    {% if item.category %}
+                                        <td><a href="{% url 'editcategory' id=item.category.id %}">{{item.category}}</a></td>
+                                    {% else %}
+                                        <td>None</td>
+                                    {% endif %}
+                                {% endif %}
+
+                                
+                                <!-- ACTION BUTTONS -->
+                                <td class="text-center borderless align-content-end">
+
+                                    <!-- delete BUTTON -->
+                                    <button type="button" class="shadow-sm btn btn-danger m-2" data-bs-toggle="modal" data-bs-target="#deleteitem{{item.id}}">
+                                        <i class="fa-solid fa-trash fs-7 "></i>
+                                    </button>
+
+                                    <div class="modal fade " id="deleteitem{{item.id}}" tabindex="-1" aria-labelledby="deleteitemLabel" aria-hidden="true">
+                                        {% include 'deleteitem.html' %}
+                                    </div>
+                                    {% if 'id'  in request.resolver_match.kwargs %}
+                                    <a href="{% url 'edititeminventory' id=item.id %}" class="shadow-sm btn btn-secondary mx-1 m-2">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </a>
+                                    {% else %}
+
+                                    <!-- edit BUTTON -->
+                                    <a href="{% url 'edititem' id=item.id %}" class="shadow-sm btn btn-secondary mx-1 m-2">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </a>
+
+                                </td>
+                                {% endif %}
+                            </tr>                  
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>     <!-- END TABLE ALL itemS -->
+
+
+
+
+            {% elif 'q' in request.GET %}
+            <div class="col-12 d-flex flex-row justify-content-around py-4">
+
+                <h5> No items matching... </h5>
+
+                <div class="py-1 mb-4 mx-5">
+                    <form class="d-flex flex-row" action="{% if 'id' in request.resolver_match.kwargs %}
+                    {% url 'deptitems' id=inventory.id %}{% else %}{% url 'items' %}{% endif %}" method="GET">
+                    <input class="form-control" type="text" name="q" placeholder="Search items or categories...">
+                    <button class="btn btn-dark" type="submit">Search</button>
+                </form>
+                </div>  
+            </div> 
+            <div class="py-1 mb-4 mx-5">
+
+                <a href="./" class="btn fs-7 mx-2">
+                    <i class="fa-solid fa-arrow-left me-2 fs-7"></i> Return
+                </a>
+            </div>  
+
+
+        {% else %}
+        <div class="col-12 d-flex flex-row justify-content-around pb-4">
+            <h3> No items yet... </h3>
+
+            <button type="button" class="btn btn-light fs-4 shadow-l px-4" data-bs-toggle="modal" data-bs-target="#addItem">
+                <i class="fa-solid fa-plus me-2"></i> <strong>Add some</strong>
+            </button>
+        </div> 
+        {% endif %}      
+    </div>    
+{% endblock %}
+
+
+{% block 'extrascripts' %}
+<script>
+    var itemSelect = document.getElementById('item');
+
+    var filteredOptions = Array.from(itemSelect.options).filter(function(option) {
+        return !inventoryItems.includes(parseInt(option.value));
+    });
+
+    Array.from(itemSelect.options).forEach(function(option) {
+        if (inventoryItems.includes(parseInt(option.value))) {
+            option.disabled = true;
+        }
+    });
+
+    filteredOptions.forEach(function(option) {
+        option.disabled = false;
+    });
+</script>
+{% endblock%}
